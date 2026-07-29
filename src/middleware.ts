@@ -25,8 +25,10 @@ export function middleware(request: NextRequest) {
   const csp = [
     `default-src 'self'`,
     // Only our nonced bootstrap script and what it loads (strict-dynamic) may
-    // run. 'wasm-unsafe-eval' is needed for on-device image embeddings.
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval'`,
+    // run. 'wasm-unsafe-eval' is needed for on-device image embeddings. The
+    // telegram.org host is a fallback for browsers that don't honour
+    // strict-dynamic (which our nonced bundle already covers for the widget).
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval' https://telegram.org`,
     // Tailwind + inline element styles (Leaflet markers) need inline styles.
     `style-src 'self' 'unsafe-inline'`,
     // Map tiles (CDNs), avatars, and data/blob image uploads.
@@ -40,7 +42,8 @@ export function middleware(request: NextRequest) {
     `base-uri 'self'`,
     `form-action 'self'`,
     `frame-ancestors 'none'`,
-    `frame-src 'none'`,
+    // The official Telegram Login Widget renders as an iframe from this origin.
+    `frame-src https://oauth.telegram.org`,
     `manifest-src 'self'`,
     `upgrade-insecure-requests`,
   ].join("; ");

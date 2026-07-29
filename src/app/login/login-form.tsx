@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PawPrint } from "lucide-react";
 import { useT } from "@/lib/i18n/react";
-import { TelegramAuthButton } from "@/components/telegram-auth-button";
+import { TelegramLoginWidget } from "@/components/telegram-login-widget";
 import { ResetPassword } from "@/components/reset-password";
 
 type Mode = "signin" | "register" | "reset";
@@ -190,7 +190,7 @@ export function LoginForm({ botUsername }: { botUsername: string }) {
                 {t("auth.orContinueWith")}
                 <span className="h-px flex-1 bg-[var(--border)]" />
               </div>
-              <TelegramAuthButton mode="login" onDone={onSuccess} />
+              <TelegramLoginWidget botUsername={botUsername} onDone={onSuccess} />
             </>
           )}
 
