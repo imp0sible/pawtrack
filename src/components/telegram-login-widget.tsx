@@ -7,9 +7,11 @@ import { useT } from "@/lib/i18n/react";
 // Requires the bot's domain to be registered with @BotFather (/setdomain).
 //
 // Telegram calls our global callback with the signed user payload; we POST it to
-// /api/auth/telegram, which verifies the signature server-side and starts the
-// session. The widget <script> is injected here (not written into the HTML) so
-// it inherits trust under the app's strict, nonce-based CSP.
+// `endpoint`, which verifies the signature server-side. Two uses:
+//   - /api/auth/telegram        → log in / create the Telegram user
+//   - /api/auth/telegram/link   → attach Telegram to the current account
+// The widget <script> is injected here (not written into the HTML) so it
+// inherits trust under the app's strict, nonce-based CSP.
 
 interface TelegramUser {
   id: number;
@@ -21,22 +23,36 @@ interface TelegramUser {
   hash: string;
 }
 
-const CALLBACK = "onTelegramAuth";
+let counter = 0;
 
-export function TelegramLoginWidget({ botUsername, onDone }: { botUsername: string; onDone: () => void }) {
+export function TelegramLoginWidget({
+  botUsername,
+  onDone,
+  endpoint = "/api/auth/telegram",
+}: {
+  botUsername?: string;
+  onDone: () => void;
+  endpoint?: string;
+}) {
   const t = useT();
   const containerRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Fall back to the public env var so the widget works from client-only
+  // contexts (e.g. the profile page) without threading the name through props.
+  const user = botUsername || process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "";
+
   useEffect(() => {
+    if (!user) return;
+    const callbackName = `onTelegramAuth_${counter++}`;
     const w = window as unknown as Record<string, unknown>;
-    w[CALLBACK] = async (user: TelegramUser) => {
+    w[callbackName] = async (tgUser: TelegramUser) => {
       setError(null);
       try {
-        const res = await fetch("/api/auth/telegram", {
+        const res = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(user),
+          body: JSON.stringify(tgUser),
         });
         if (!res.ok) throw new Error("verify failed");
         onDone();
@@ -48,19 +64,21 @@ export function TelegramLoginWidget({ botUsername, onDone }: { botUsername: stri
     const script = document.createElement("script");
     script.src = "https://telegram.org/js/telegram-widget.js?22";
     script.async = true;
-    script.setAttribute("data-telegram-login", botUsername);
+    script.setAttribute("data-telegram-login", user);
     script.setAttribute("data-size", "large");
     script.setAttribute("data-radius", "12");
     script.setAttribute("data-request-access", "write");
-    script.setAttribute("data-onauth", `${CALLBACK}(user)`);
+    script.setAttribute("data-onauth", `${callbackName}(user)`);
     const el = containerRef.current;
     el?.appendChild(script);
 
     return () => {
-      delete w[CALLBACK];
+      delete w[callbackName];
       if (el) el.innerHTML = "";
     };
-  }, [botUsername, onDone, t]);
+  }, [user, endpoint, onDone, t]);
+
+  if (!user) return null;
 
   return (
     <div>

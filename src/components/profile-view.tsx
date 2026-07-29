@@ -11,7 +11,7 @@ import {
 import { trpc } from "@/lib/trpc/react";
 import { Avatar } from "@/components/avatar";
 import { FriendsPanel } from "@/components/friends-panel";
-import { TelegramAuthButton } from "@/components/telegram-auth-button";
+import { TelegramLoginWidget } from "@/components/telegram-login-widget";
 import { formatDistance } from "@/lib/geo";
 import { formatDuration } from "@/lib/format";
 import { formatPhone } from "@/lib/phone";
@@ -221,13 +221,12 @@ export function ProfileView({ username }: { username?: string }) {
               <Check className="h-3.5 w-3.5" /> {t("auth.telegramConnected")}
             </span>
           ) : (
-            <TelegramAuthButton
-              mode="link"
+            <TelegramLoginWidget
+              endpoint="/api/auth/telegram/link"
               onDone={() => {
                 utils.user.profile.invalidate();
                 router.refresh();
               }}
-              className="btn-ghost inline-flex items-center gap-2"
             />
           )}
         </div>

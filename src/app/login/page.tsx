@@ -5,5 +5,7 @@ import { LoginForm } from "./login-form";
 export default async function LoginPage() {
   const user = await getSessionUser();
   if (user) redirect("/");
-  return <LoginForm botUsername={process.env.TELEGRAM_BOT_USERNAME ?? ""} />;
+  const botUsername =
+    process.env.TELEGRAM_BOT_USERNAME ?? process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? "";
+  return <LoginForm botUsername={botUsername} />;
 }
