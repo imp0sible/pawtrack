@@ -7,6 +7,8 @@
  */
 import { prisma } from "@/lib/db";
 import { appRouter } from "@/server/trpc/root";
+import { evaluateAchievements } from "@/lib/achievements";
+import { ALPHA_ENDS_AT } from "@/lib/constants";
 
 const PHONE_PREFIX = "+1999000"; // test users; cleaned up at the end
 
@@ -87,6 +89,18 @@ async function main() {
   // 5) Owner marks the dog HOME -> Finder for the searcher (dogsFound >= 1)
   await ownerCaller.search.archive({ searchId, outcome: "HOME" });
   record("search.archive", "first_find", (await earned(searcher.id)).has("first_find"));
+
+  // 6) Alpha Pioneer — the searcher was created now, inside the alpha window.
+  record("alpha-era user", "alpha", (await earned(searcher.id)).has("alpha"));
+
+  // 7) A user created AFTER the alpha window must NEVER earn it.
+  const future = await makeUser("TestFuture", PHONE_PREFIX + "003");
+  await prisma.user.update({
+    where: { id: future.id },
+    data: { createdAt: new Date(ALPHA_ENDS_AT.getTime() + 86_400_000) }, // 1 day past cutoff
+  });
+  await evaluateAchievements(future.id);
+  record("post-alpha user", "alpha", (await earned(future.id)).has("alpha"), false);
 
   // Report
   let pass = 0;

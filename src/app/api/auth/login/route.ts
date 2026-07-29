@@ -4,6 +4,7 @@ import { signSession, sessionCookie } from "@/lib/auth";
 import { verifyPassword } from "@/lib/password";
 import { normalizePhone } from "@/lib/phone";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { evaluateAchievements } from "@/lib/achievements";
 
 export async function POST(req: Request) {
   if (!rateLimit(`login:${clientIp(req)}`, 10, 60_000)) {
@@ -35,6 +36,12 @@ export async function POST(req: Request) {
     { status: 401 }
   );
   if (!user || !verifyPassword(password, user.passwordHash)) return invalid;
+
+  // Best-effort: grant time-limited badges (e.g. Alpha Pioneer) on sign-in.
+  // Never let this block or fail the login.
+  try {
+    await evaluateAchievements(user.id);
+  } catch {}
 
   const token = await signSession(user.id);
   const res = NextResponse.json({ ok: true });

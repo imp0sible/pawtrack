@@ -55,6 +55,12 @@ export const SORT_LABELS: Record<SortMode, string> = {
   ALPHABETICAL: "A–Z",
 };
 
+// The alpha window. Anyone whose account is created on or before this moment
+// earns the alpha badge — and keeps it forever; accounts created afterwards can
+// never earn it. Override with the ALPHA_ENDS_AT env var (ISO date) to
+// extend/close the alpha without a code change.
+export const ALPHA_ENDS_AT = new Date(process.env.ALPHA_ENDS_AT ?? "2026-10-31T23:59:59Z");
+
 // Achievement metrics correspond to aggregate stats computed per user.
 export type AchievementMetric =
   | "searchesJoined"
@@ -62,7 +68,8 @@ export type AchievementMetric =
   | "metersCovered"
   | "secondsSpent"
   | "sightingsReported"
-  | "bugsReported";
+  | "bugsReported"
+  | "alphaMember";
 
 export interface AchievementDef {
   key: string;
@@ -87,4 +94,5 @@ export const ACHIEVEMENT_DEFS: AchievementDef[] = [
   { key: "ten_sightings", name: "Eagle Eye", description: "Reported 10 sightings", icon: "🦅", metric: "sightingsReported", threshold: 10 },
   { key: "first_bug", name: "Bug Hunter", description: "Reported your first bug", icon: "🐛", metric: "bugsReported", threshold: 1 },
   { key: "beta_tester", name: "Beta Tester", description: "Reported 5 bugs to help improve PawTrack", icon: "🧪", metric: "bugsReported", threshold: 5 },
+  { key: "alpha", name: "Alpha Pioneer", description: "Was here during the PawTrack alpha", icon: "🌱", metric: "alphaMember", threshold: 1 },
 ];

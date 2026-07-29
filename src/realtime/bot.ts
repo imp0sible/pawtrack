@@ -1,6 +1,7 @@
 import { Bot, type Context } from "grammy";
 import { prisma } from "@/lib/db";
 import { pathMeters } from "@/lib/geo";
+import { evaluateAchievements } from "@/lib/achievements";
 
 type Emit = (room: string, event: string, payload: unknown) => void;
 
@@ -107,6 +108,11 @@ async function handleLogin(ctx: Context, token: string) {
     where: { token },
     data: { status: "DONE", resolvedUserId: user.id },
   });
+
+  // Grant time-limited badges (e.g. Alpha Pioneer) on Telegram sign-in too.
+  try {
+    await evaluateAchievements(user.id);
+  } catch {}
 
   const name = profile.firstName ?? profile.username ?? "there";
   await ctx.reply(`✅ Signed in as ${name}. Head back to your browser — it will continue automatically. 🐾`);

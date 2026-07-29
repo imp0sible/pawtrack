@@ -4,6 +4,7 @@ import { signSession, sessionCookie } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 import { normalizePhone, isValidPhone } from "@/lib/phone";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { evaluateAchievements } from "@/lib/achievements";
 
 function fail(error: string, field?: string, status = 400) {
   return NextResponse.json({ error, field }, { status });
@@ -51,6 +52,11 @@ export async function POST(req: Request) {
       settings: { create: {} },
     },
   });
+
+  // New accounts created during the alpha earn the Alpha Pioneer badge.
+  try {
+    await evaluateAchievements(user.id);
+  } catch {}
 
   const token = await signSession(user.id);
   const res = NextResponse.json({ ok: true });
