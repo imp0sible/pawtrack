@@ -1,0 +1,19 @@
+# Caddy reverse proxy for PawTrack. Replace pawtrack.example.com with your real
+# domain. Caddy fetches and renews a free HTTPS certificate automatically.
+#
+# Install: place this at /etc/caddy/Caddyfile, then: systemctl reload caddy
+
+pawtrack.example.com {
+	encode zstd gzip
+
+	# Live map / notifications WebSocket -> realtime worker on :3001.
+	# (Caddy proxies the WebSocket upgrade transparently.)
+	handle /socket.io/* {
+		reverse_proxy 127.0.0.1:3001
+	}
+
+	# Everything else -> the Next.js app on :3000.
+	handle {
+		reverse_proxy 127.0.0.1:3000
+	}
+}

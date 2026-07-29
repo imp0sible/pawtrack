@@ -1,0 +1,273 @@
+// Lost Dog Search — data model.
+// SQLite for local dev: no native enums or scalar lists, so enum-like
+// values are Strings (see src/lib/constants.ts) and list/JSON fields are
+// stored as JSON strings (fields suffixed *Json).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  telegramId    String?  @unique
+  phone         String?  @unique
+  passwordHash  String?
+  phoneVerified Boolean  @default(false)
+  isDeveloper   Boolean  @default(false)
+  username      String?  @unique
+  firstName     String?
+  lastName      String?
+  photoUrl      String?
+  bio           String?
+  createdAt     DateTime @default(now())
+
+  settings       UserSettings?
+  dogs           Dog[]               @relation("OwnerDogs")
+  participations SearchParticipant[]
+  sightings      SightingPin[]
+  pois           PointOfInterest[]
+  coverage       CoverageSegment[]
+  friendsFrom    Friendship[]        @relation("FriendshipFrom")
+  friendsTo      Friendship[]        @relation("FriendshipTo")
+  achievements   UserAchievement[]
+  notifications  Notification[]
+  bugReports     BugReport[]         @relation("BugReporter")
+  streetSightings StreetDogSighting[] @relation("StreetSightings")
+  listingReports ListingReport[]     @relation("ListingReporter")
+}
+
+// Short-lived tokens for the Telegram bot deep-link login/connect flow.
+// The web server creates a token; the bot (separate process) resolves it via
+// the shared database.
+model TgAuthToken {
+  id              String   @id @default(cuid())
+  token           String   @unique
+  kind            String // LOGIN | LINK
+  status          String   @default("PENDING") // PENDING | DONE | ERROR | CONSUMED
+  initiatorUserId String? // for LINK: the logged-in user attaching Telegram
+  resolvedUserId  String? // the user to log in as (LOGIN) or that was linked (LINK)
+  error           String?
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+}
+
+model UserSettings {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  soundsEnabled        Boolean  @default(true)
+  notificationsEnabled Boolean  @default(true)
+  geolocationEnabled   Boolean  @default(true)
+  friendActivityAlerts Boolean  @default(true)
+  updatedAt            DateTime @updatedAt
+}
+
+model Dog {
+  id          String   @id @default(cuid())
+  name        String
+  breed       String?
+  color       String?
+  size        String? // SMALL | MEDIUM | LARGE
+  description String?
+  chipNumber  String? // microchip / transponder number
+  contentLang String? // locale the reporter wrote the card in (for auto-translation)
+  embeddingsJson String? // JSON array of image-embedding vectors (one per photo)
+  photosJson  String   @default("[]") // JSON array of photo URLs
+  status      String   @default("LOST") // LOST | FOUND | HOME
+  contactPhone String? // phone shown on the card; defaults to owner's phone
+  ownerId     String
+  owner       User     @relation("OwnerDogs", fields: [ownerId], references: [id], onDelete: Cascade)
+  homeLat     Float?
+  homeLng     Float?
+  createdAt   DateTime @default(now())
+
+  search Search?
+}
+
+model Search {
+  id                String    @id @default(cuid())
+  dogId             String    @unique
+  dog               Dog       @relation(fields: [dogId], references: [id], onDelete: Cascade)
+  status            String    @default("ACTIVE") // ACTIVE | ARCHIVED
+  telegramGroupLink String?
+  lastSeenLat       Float?
+  lastSeenLng       Float?
+  lastSeenAddress   String?
+  lastSeenAt        DateTime?
+  startedAt         DateTime  @default(now())
+  endedAt           DateTime?
+
+  participants SearchParticipant[]
+  sightings    SightingPin[]
+  pois         PointOfInterest[]
+  coverage     CoverageSegment[]
+  reports      ListingReport[]
+}
+
+model SearchParticipant {
+  id            String   @id @default(cuid())
+  searchId      String
+  search        Search   @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role          String   @default("SEARCHER") // OWNER | SEARCHER
+  joinedAt      DateTime @default(now())
+  secondsSpent  Int      @default(0)
+  metersCovered Int      @default(0)
+
+  @@unique([searchId, userId])
+}
+
+model SightingPin {
+  id        String   @id @default(cuid())
+  searchId  String
+  search    Search   @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lat       Float
+  lng       Float
+  note      String?
+  photoUrl  String?
+  seenAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+}
+
+model PointOfInterest {
+  id        String   @id @default(cuid())
+  searchId  String
+  search    Search   @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  type      String // TRASH_BIN | SHOP | FLYER_SPOT | OTHER
+  lat       Float
+  lng       Float
+  note      String?
+  addedById String
+  addedBy   User     @relation(fields: [addedById], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model CoverageSegment {
+  id         String   @id @default(cuid())
+  searchId   String
+  search     Search   @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pointsJson String   @default("[]") // JSON array of [lat, lng]
+  meters     Float    @default(0)
+  source     String   @default("APP") // APP | BOT
+  recordedAt DateTime @default(now())
+}
+
+model Friendship {
+  id        String   @id @default(cuid())
+  fromId    String
+  from      User     @relation("FriendshipFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  toId      String
+  to        User     @relation("FriendshipTo", fields: [toId], references: [id], onDelete: Cascade)
+  status    String   @default("PENDING") // PENDING | ACCEPTED
+  createdAt DateTime @default(now())
+
+  @@unique([fromId, toId])
+}
+
+model Achievement {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  name        String
+  description String
+  icon        String?
+  metric      String? // searches | meters | dogsFound | seconds
+  threshold   Int?
+
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  earnedAt      DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String?
+  dataJson  String   @default("{}")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model BugReport {
+  id              String        @id @default(cuid())
+  reporterId      String
+  reporter        User          @relation("BugReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  title           String
+  description     String
+  screenshotsJson String        @default("[]") // JSON array of image data URLs
+  status          String        @default("OPEN") // OPEN | CLOSED
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  responses       BugResponse[]
+}
+
+model BugResponse {
+  id        String    @id @default(cuid())
+  reportId  String
+  report    BugReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime  @default(now())
+}
+
+// A dog someone photographed on the street. Kept even when it doesn't match a
+// listing, so a later-posted lost dog can be matched against it retroactively.
+model StreetDogSighting {
+  id              String   @id @default(cuid())
+  reporterId      String
+  reporter        User     @relation("StreetSightings", fields: [reporterId], references: [id], onDelete: Cascade)
+  photosJson      String   @default("[]") // JSON array of image data URLs
+  embeddingsJson  String? // JSON array of image-embedding vectors (one per photo)
+  lat             Float
+  lng             Float
+  seenAt          DateTime @default(now())
+  note            String?
+  status          String   @default("UNMATCHED") // UNMATCHED | MATCHED
+  matchedSearchId String?
+  createdAt       DateTime @default(now())
+}
+
+// A user-submitted report flagging a lost-dog listing (scam, spam, abusive
+// content, wrong info, etc.) for developer review.
+model ListingReport {
+  id         String   @id @default(cuid())
+  searchId   String
+  search     Search   @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  reporterId String
+  reporter   User     @relation("ListingReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reason     String // SCAM | INAPPROPRIATE | WRONG_INFO | SPAM | OTHER
+  note       String?
+  status     String   @default("OPEN") // OPEN | REVIEWED | DISMISSED
+  createdAt  DateTime @default(now())
+
+  @@index([status])
+}
+
+model DevlogEntry {
+  id        String   @id @default(cuid())
+  version   String
+  title     String
+  body      String
+  kind      String   @default("MINOR") // MAJOR | MINOR
+  createdAt DateTime @default(now())
+}
