@@ -74,12 +74,20 @@ export async function startBot(emit: Emit): Promise<void> {
   bot.on("message:location", (ctx) => handleLocation(ctx, emit));
   bot.on("edited_message:location", (ctx) => handleLocation(ctx, emit));
 
-  bot.catch((err) => console.error("[bot] error:", err.error));
+  bot.catch((err) => console.error("[bot] handler error:", err.error));
 
-  // Long-polling: no public URL needed for local dev.
-  bot.start({
-    onStart: (info) => console.log(`[bot] @${info.username} started (long-polling).`),
-  });
+  // Long-polling: no public URL needed. A startup failure (bad token, another
+  // poller already running, Telegram outage) must NOT take down the realtime
+  // server — catch it, log it, and let socket.io keep serving. Otherwise an
+  // unhandled rejection here crashes the whole worker and pm2 restart-loops it.
+  bot
+    .start({
+      onStart: (info) => console.log(`[bot] @${info.username} started (long-polling).`),
+    })
+    .catch((err: unknown) => {
+      const e = err as { description?: string; message?: string };
+      console.error("[bot] disabled — failed to start (realtime continues):", e?.description ?? e?.message ?? err);
+    });
 }
 
 // Signs the user in: finds/creates a User for this Telegram account and marks
