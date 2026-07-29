@@ -190,7 +190,7 @@ export function LoginForm({ botUsername }: { botUsername: string }) {
                 {t("auth.orContinueWith")}
                 <span className="h-px flex-1 bg-[var(--border)]" />
               </div>
-              <TelegramLoginWidget botUsername={botUsername} onDone={onSuccess} />
+              <TelegramLoginWidget botUsername={botUsername} />
             </>
           )}
 

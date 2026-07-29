@@ -221,13 +221,7 @@ export function ProfileView({ username }: { username?: string }) {
               <Check className="h-3.5 w-3.5" /> {t("auth.telegramConnected")}
             </span>
           ) : (
-            <TelegramLoginWidget
-              endpoint="/api/auth/telegram/link"
-              onDone={() => {
-                utils.user.profile.invalidate();
-                router.refresh();
-              }}
-            />
+            <TelegramLoginWidget endpoint="/api/auth/telegram/link" />
           )}
         </div>
       )}
