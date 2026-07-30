@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { signSession, sessionCookie } from "@/lib/auth";
 import { verifyWebAppInitData } from "@/lib/telegram";
+import { upsertTelegramUser } from "@/lib/telegram-user";
 import { evaluateAchievements } from "@/lib/achievements";
 
 // Mini App auto-login: the app, running inside Telegram, posts its signed
@@ -23,19 +24,14 @@ export async function POST(req: Request) {
   const v = verifyWebAppInitData(initData, botToken);
   if (!v) return NextResponse.json({ error: "Telegram verification failed" }, { status: 401 });
 
-  const telegramId = String(v.id);
-  const user = await prisma.user.upsert({
-    where: { telegramId },
-    create: {
-      telegramId,
-      username: v.username,
-      firstName: v.first_name,
-      lastName: v.last_name,
-      photoUrl: v.photo_url,
-      settings: { create: {} },
-    },
-    update: { username: v.username, firstName: v.first_name, lastName: v.last_name, photoUrl: v.photo_url },
-  });
+  let user;
+  try {
+    user = await upsertTelegramUser(v);
+  } catch (e) {
+    // Log the real cause server-side; the client only needs to know it failed.
+    console.error("[tg webapp] account setup failed:", e);
+    return NextResponse.json({ error: "Could not set up your account" }, { status: 500 });
+  }
 
   try {
     await evaluateAchievements(user.id);

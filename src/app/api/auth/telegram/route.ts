@@ -2,28 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { signSession, sessionCookie } from "@/lib/auth";
 import { verifyTelegramAuth } from "@/lib/telegram";
+import { upsertTelegramUser } from "@/lib/telegram-user";
 import { evaluateAchievements } from "@/lib/achievements";
 
 // Canonical origin for redirects — reliable behind the reverse proxy, where the
 // request's own host/protocol may be the internal http://localhost:3000.
 function base(req: Request): string {
   return process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
-}
-
-async function upsertTelegramUser(v: NonNullable<ReturnType<typeof verifyTelegramAuth>>) {
-  const telegramId = String(v.id);
-  return prisma.user.upsert({
-    where: { telegramId },
-    create: {
-      telegramId,
-      username: v.username,
-      firstName: v.first_name,
-      lastName: v.last_name,
-      photoUrl: v.photo_url,
-      settings: { create: {} },
-    },
-    update: { username: v.username, firstName: v.first_name, lastName: v.last_name, photoUrl: v.photo_url },
-  });
 }
 
 // Redirect (data-auth-url) flow used by the official Login Widget: Telegram
@@ -66,24 +51,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Telegram verification failed" }, { status: 401 });
   }
 
-  const telegramId = String(verified.id);
-  const user = await prisma.user.upsert({
-    where: { telegramId },
-    create: {
-      telegramId,
-      username: verified.username,
-      firstName: verified.first_name,
-      lastName: verified.last_name,
-      photoUrl: verified.photo_url,
-      settings: { create: {} },
-    },
-    update: {
-      username: verified.username,
-      firstName: verified.first_name,
-      lastName: verified.last_name,
-      photoUrl: verified.photo_url,
-    },
-  });
+  const user = await upsertTelegramUser(verified);
 
   const token = await signSession(user.id);
   const res = NextResponse.json({ ok: true });

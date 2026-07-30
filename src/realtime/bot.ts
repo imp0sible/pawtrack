@@ -2,6 +2,7 @@ import { Bot, InlineKeyboard, type Context } from "grammy";
 import { prisma } from "@/lib/db";
 import { pathMeters } from "@/lib/geo";
 import { evaluateAchievements } from "@/lib/achievements";
+import { upsertTelegramUser } from "@/lib/telegram-user";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
@@ -113,17 +114,15 @@ async function handleLogin(ctx: Context, token: string) {
     return;
   }
 
-  const telegramId = String(ctx.from.id);
-  const profile = {
+  // Shared helper: only claims the Telegram @username when it's free, so a
+  // name collision can't block signing in.
+  const user = await upsertTelegramUser({
+    id: ctx.from.id,
     username: ctx.from.username ?? undefined,
-    firstName: ctx.from.first_name ?? undefined,
-    lastName: ctx.from.last_name ?? undefined,
-  };
-  const user = await prisma.user.upsert({
-    where: { telegramId },
-    create: { telegramId, ...profile, settings: { create: {} } },
-    update: profile,
+    first_name: ctx.from.first_name ?? undefined,
+    last_name: ctx.from.last_name ?? undefined,
   });
+  const profile = { firstName: user.firstName, username: user.username };
 
   await prisma.tgAuthToken.update({
     where: { token },
