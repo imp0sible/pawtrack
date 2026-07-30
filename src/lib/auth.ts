@@ -13,14 +13,20 @@ export function verifySession(token: string): Promise<string | null> {
   return verifySessionToken(token);
 }
 
+// In production the session cookie is SameSite=None so it's still sent when the
+// app runs inside Telegram's cross-site Mini App iframe (SameSite=None requires
+// Secure, which production already is). In dev we stay on Lax so it works over
+// plain http://localhost.
+const crossSite = process.env.NODE_ENV === "production";
+
 export const sessionCookie = {
   name: COOKIE_NAME,
   maxAge: SESSION_DAYS * 24 * 60 * 60,
   options: {
     httpOnly: true,
-    sameSite: "lax" as const,
+    sameSite: (crossSite ? "none" : "lax") as "none" | "lax",
     path: "/",
-    secure: process.env.NODE_ENV === "production",
+    secure: crossSite,
   },
 };
 

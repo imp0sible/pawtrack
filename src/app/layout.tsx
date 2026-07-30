@@ -42,6 +42,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     >
       <body className="min-h-full flex flex-col">
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {/* Telegram Mini App SDK — populates window.Telegram.WebApp when the app
+            runs inside Telegram. Harmless (inert) in a normal browser. */}
+        <script nonce={nonce} src="https://telegram.org/js/telegram-web-app.js" />
         <Providers locale={locale}>{children}</Providers>
       </body>
     </html>

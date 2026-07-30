@@ -41,7 +41,9 @@ export function middleware(request: NextRequest) {
     `object-src 'none'`,
     `base-uri 'self'`,
     `form-action 'self'`,
-    `frame-ancestors 'none'`,
+    // Allow Telegram Web to embed us as a Mini App (mobile/desktop use a native
+    // webview, not an iframe, so this mainly covers web.telegram.org).
+    `frame-ancestors 'self' https://web.telegram.org`,
     // The official Telegram Login Widget renders as an iframe from this origin.
     `frame-src https://oauth.telegram.org`,
     `manifest-src 'self'`,

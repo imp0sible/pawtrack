@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { PawPrint } from "lucide-react";
 import { useT } from "@/lib/i18n/react";
 import { TelegramLoginWidget } from "@/components/telegram-login-widget";
+import { TelegramMiniAppAuth } from "@/components/telegram-miniapp-auth";
 import { ResetPassword } from "@/components/reset-password";
 
 type Mode = "signin" | "register" | "reset";
@@ -81,6 +82,8 @@ export function LoginForm({ botUsername }: { botUsername: string }) {
 
   return (
     <div className="flex flex-1 items-center justify-center px-4 py-16">
+      {/* Inside Telegram: auto sign-in and skip this form entirely. */}
+      <TelegramMiniAppAuth />
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--brand)] text-white shadow-lg">

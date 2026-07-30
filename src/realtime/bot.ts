@@ -1,7 +1,9 @@
-import { Bot, type Context } from "grammy";
+import { Bot, InlineKeyboard, type Context } from "grammy";
 import { prisma } from "@/lib/db";
 import { pathMeters } from "@/lib/geo";
 import { evaluateAchievements } from "@/lib/achievements";
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
 type Emit = (room: string, event: string, payload: unknown) => void;
 
@@ -33,12 +35,23 @@ export async function startBot(emit: Emit): Promise<void> {
 
   const bot = new Bot(token);
 
+  // Persistent menu button that opens the full app as a Mini App. Best-effort;
+  // a failure here must not stop the bot.
+  if (APP_URL) {
+    bot.api
+      .setChatMenuButton({
+        menu_button: { type: "web_app", text: "Open PawTrack", web_app: { url: APP_URL } },
+      })
+      .catch((e) => console.error("[bot] setChatMenuButton failed:", e));
+  }
+
   bot.command("start", async (ctx) => {
     const payload = ctx.match?.trim();
     if (!payload) {
+      const keyboard = APP_URL ? new InlineKeyboard().webApp("🐾 Open PawTrack", APP_URL) : undefined;
       await ctx.reply(
-        "🐕 <b>PawTrack</b>\n\nOpen a search on the web app and tap “Track via Telegram” to record your coverage here by sharing your Live Location.\n\nCommands:\n/stop — finish recording",
-        { parse_mode: "HTML" }
+        "🐾 <b>PawTrack</b>\n\nTap the button below to open the app — report a lost dog, see searches near you, and report sightings, all right here in Telegram.\n\nDuring a search you can also share your <b>Live Location</b> to record your coverage on the map. /help for more.",
+        { parse_mode: "HTML", reply_markup: keyboard }
       );
       return;
     }

@@ -47,6 +47,65 @@ export function verifyTelegramAuth(
   };
 }
 
+export interface TelegramWebAppUser {
+  id: number;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+}
+
+// Verifies Telegram Mini App `initData` per
+// https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app
+// NOTE: the algorithm differs from the Login Widget above — the secret key is
+// HMAC_SHA256(botToken) keyed by the literal string "WebAppData".
+export function verifyWebAppInitData(initData: string, botToken: string): TelegramWebAppUser | null {
+  let params: URLSearchParams;
+  try {
+    params = new URLSearchParams(initData);
+  } catch {
+    return null;
+  }
+  const hash = params.get("hash");
+  if (!hash) return null;
+
+  const pairs: string[] = [];
+  params.forEach((value, key) => {
+    // `hash` is what we're checking; `signature` is Telegram's separate 3rd-party
+    // (Ed25519) field and is excluded from the HMAC data-check-string.
+    if (key === "hash" || key === "signature") return;
+    pairs.push(`${key}=${value}`);
+  });
+  pairs.sort();
+  const dataCheckString = pairs.join("\n");
+
+  const secret = crypto.createHmac("sha256", "WebAppData").update(botToken).digest();
+  const hmac = crypto.createHmac("sha256", secret).update(dataCheckString).digest("hex");
+
+  let a: Buffer;
+  let b: Buffer;
+  try {
+    a = Buffer.from(hmac, "hex");
+    b = Buffer.from(hash, "hex");
+  } catch {
+    return null;
+  }
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+
+  // Freshness: reject payloads older than 24h.
+  const authDate = Number(params.get("auth_date"));
+  if (!Number.isFinite(authDate) || Date.now() / 1000 - authDate > 86400) return null;
+
+  const userJson = params.get("user");
+  if (!userJson) return null;
+  try {
+    const u = JSON.parse(userJson) as TelegramWebAppUser;
+    return typeof u.id === "number" ? u : null;
+  } catch {
+    return null;
+  }
+}
+
 export function dmLink(username?: string | null): string | null {
   if (!username) return null;
   return `https://t.me/${username.replace(/^@/, "")}`;
