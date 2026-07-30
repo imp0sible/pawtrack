@@ -9,6 +9,7 @@ import { NotificationBell } from "@/components/notification-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { DevBugsLink } from "@/components/dev-bugs-link";
 import { DevReportsLink } from "@/components/dev-reports-link";
+import { DevApprovalsLink } from "@/components/dev-approvals-link";
 import { useT } from "@/lib/i18n/react";
 import type { MessageKey } from "@/lib/i18n/messages";
 
@@ -84,6 +85,7 @@ export function Nav({ me }: { me: Me }) {
                 top bar to keep it from overflowing (reachable at /reports, /bugs). */}
             {me.isDeveloper && (
               <span className="hidden sm:contents">
+                <DevApprovalsLink />
                 <DevReportsLink />
                 <DevBugsLink />
               </span>

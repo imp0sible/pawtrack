@@ -25,6 +25,9 @@ model User {
   photoUrl      String?
   bio           String?
   createdAt     DateTime @default(now())
+  // Set when a developer bans the account. Non-null = banned.
+  bannedAt      DateTime?
+  banReason     String?
 
   settings       UserSettings?
   dogs           Dog[]               @relation("OwnerDogs")
@@ -39,6 +42,9 @@ model User {
   bugReports     BugReport[]         @relation("BugReporter")
   streetSightings StreetDogSighting[] @relation("StreetSightings")
   listingReports ListingReport[]     @relation("ListingReporter")
+  reportsFiled   UserReport[]        @relation("UserReportReporter")
+  reportsAgainst UserReport[]        @relation("UserReportTarget")
+  reviewedSearches Search[]          @relation("SearchReviewer")
 }
 
 // Short-lived tokens for the Telegram bot deep-link login/connect flow.
@@ -96,7 +102,14 @@ model Search {
   id                String    @id @default(cuid())
   dogId             String    @unique
   dog               Dog       @relation(fields: [dogId], references: [id], onDelete: Cascade)
-  status            String    @default("ACTIVE") // ACTIVE | ARCHIVED
+  // New listings start PENDING and are only published once a developer approves
+  // them. PENDING | ACTIVE | REJECTED | ARCHIVED.
+  status            String    @default("PENDING")
+  // Developer review trail.
+  reviewedAt        DateTime?
+  reviewedById      String?
+  reviewedBy        User?     @relation("SearchReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewNote        String?
   telegramGroupLink String?
   lastSeenLat       Float?
   lastSeenLng       Float?
@@ -263,6 +276,22 @@ model ListingReport {
   reporterId String
   reporter   User     @relation("ListingReporter", fields: [reporterId], references: [id], onDelete: Cascade)
   reason     String // SCAM | INAPPROPRIATE | WRONG_INFO | SPAM | OTHER
+  note       String?
+  status     String   @default("OPEN") // OPEN | REVIEWED | DISMISSED
+  createdAt  DateTime @default(now())
+
+  @@index([status])
+}
+
+// A user-submitted report about another user (harassment, scam, spam, etc.),
+// reviewed by a developer who may ban the reported account.
+model UserReport {
+  id         String   @id @default(cuid())
+  reporterId String
+  reporter   User     @relation("UserReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetId   String
+  target     User     @relation("UserReportTarget", fields: [targetId], references: [id], onDelete: Cascade)
+  reason     String // HARASSMENT | SCAM | SPAM | FAKE_LISTING | INAPPROPRIATE | OTHER
   note       String?
   status     String   @default("OPEN") // OPEN | REVIEWED | DISMISSED
   createdAt  DateTime @default(now())

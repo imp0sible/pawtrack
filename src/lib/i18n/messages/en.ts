@@ -373,6 +373,74 @@ export const en = {
   "reports.markReviewed": "Mark reviewed",
   "reports.dismiss": "Dismiss",
   "reports.reopen": "Reopen",
+
+  // Statuses for reviewed listings
+  "status.PENDING": "Awaiting review",
+  "status.REJECTED": "Not approved",
+
+  // Banned account
+  "banned.title": "Account suspended",
+  "banned.body": "Your account has been suspended and can no longer be used to post or join searches.",
+  "banned.reason": "Reason",
+  "banned.appeal": "If you believe this was a mistake, please get in touch so we can take another look.",
+
+  // Report a user
+  "reportUser.button": "Report user",
+  "reportUser.title": "Report this user",
+  "reportUser.subtitle": "Tell us what happened. Reports are reviewed by the team.",
+  "reportUser.reason": "Reason",
+  "reportUser.reason.HARASSMENT": "Harassment or abuse",
+  "reportUser.reason.SCAM": "Scam or fraud",
+  "reportUser.reason.SPAM": "Spam",
+  "reportUser.reason.FAKE_LISTING": "Fake lost-dog listing",
+  "reportUser.reason.INAPPROPRIATE": "Inappropriate content",
+  "reportUser.reason.OTHER": "Something else",
+  "reportUser.note": "Details",
+  "reportUser.notePlaceholder": "Anything that helps us review this…",
+  "reportUser.submit": "Submit report",
+  "reportUser.submitted": "Thanks — we'll review this account.",
+
+  // Developer: ban controls
+  "ban.ban": "Ban user",
+  "ban.unban": "Lift ban",
+  "ban.reason": "Reason (shown to the user)",
+  "ban.reasonPlaceholder": "Why is this account being suspended?",
+  "ban.confirm": "Ban this account",
+  "ban.banning": "Banning…",
+  "ban.banned": "This account is banned",
+  "ban.bannedSince": "Banned {date}",
+  "ban.cannotBanDeveloper": "Developer accounts can't be banned.",
+
+  // Developer: review queue
+  "nav.approvals": "Listings to review",
+  "review.title": "Listings to review",
+  "review.subtitle": "New lost-dog listings waiting to be published.",
+  "review.empty": "Nothing waiting for review. 🎉",
+  "review.tabPending": "Awaiting review",
+  "review.tabRejected": "Not approved",
+  "review.approve": "Approve & publish",
+  "review.reject": "Reject",
+  "review.note": "Note to the reporter (optional)",
+  "review.notePlaceholder": "Why is this being rejected?",
+  "review.reviewing": "Saving…",
+  "review.by": "Reported by {name}",
+  "review.chip": "Microchip",
+  "review.phone": "Contact",
+
+  // Reporter-facing review status
+  "pending.banner": "This listing is awaiting review by our team. It isn't visible to the community yet.",
+  "pending.rejectedBanner": "This listing wasn't approved.",
+  "pending.reviewNote": "Note from the team",
+  "pending.afterSubmit": "Thanks! Your listing has been submitted and is awaiting a quick review before it goes live. We'll notify you as soon as it's published.",
+
+  // My searches
+  "searches.pending": "Awaiting review ({count})",
+  "searches.pendingNote": "These listings are being reviewed before they go public.",
+
+  // Moderation tabs
+  "mod.tabListings": "Listings",
+  "mod.tabUsers": "Users",
+  "mod.tabApprovals": "Approvals",
 } as const;
 
 export type MessageKey = keyof typeof en;

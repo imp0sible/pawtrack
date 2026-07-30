@@ -10,6 +10,9 @@ const STYLES: Record<string, string> = {
   HOME: "bg-[var(--brand)] text-white",
   ACTIVE: "bg-[var(--danger)] text-white",
   ARCHIVED: "bg-[var(--muted)] text-white",
+  // Review states for a submitted listing.
+  PENDING: "bg-[var(--accent)] text-black",
+  REJECTED: "bg-[var(--muted)] text-white",
 };
 
 export function StatusBadge({ status }: { status: DogStatus | string }) {

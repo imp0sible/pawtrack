@@ -5,10 +5,14 @@ import { Nav } from "@/components/nav";
 import { PhoneSetup } from "@/components/phone-setup";
 import { PasswordSetup } from "@/components/password-setup";
 import { ConnectionStatus } from "@/components/connection-status";
+import { BannedScreen } from "@/components/banned-screen";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
+
+  // Banned accounts see only the ban notice — checked before every other gate.
+  if (user.bannedAt) return <BannedScreen reason={user.banReason} />;
 
   // A phone number and a password are mandatory for every account (e.g.
   // Telegram/dev users start with neither). Block the app until both are set.

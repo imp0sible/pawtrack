@@ -12,6 +12,8 @@ import { trpc } from "@/lib/trpc/react";
 import { Avatar } from "@/components/avatar";
 import { FriendsPanel } from "@/components/friends-panel";
 import { TelegramLoginWidget } from "@/components/telegram-login-widget";
+import { ReportUser } from "@/components/report-user";
+import { BanControls } from "@/components/ban-controls";
 import { formatDistance } from "@/lib/geo";
 import { formatDuration } from "@/lib/format";
 import { formatPhone } from "@/lib/phone";
@@ -48,6 +50,8 @@ function StatTile({ label, value, icon: Icon }: { label: string; value: string; 
 export function ProfileView({ username }: { username?: string }) {
   const t = useT();
   const q = trpc.user.profile.useQuery({ username });
+  // The viewer — used to expose developer-only moderation controls.
+  const me = trpc.user.me.useQuery();
   const utils = trpc.useUtils();
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -209,6 +213,22 @@ export function ProfileView({ username }: { username?: string }) {
           </div>
         </div>
       </div>
+
+      {/* Reporting + developer moderation, on someone else's profile. */}
+      {!p.isSelf && (
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <ReportUser userId={p.id} />
+        </div>
+      )}
+      {!p.isSelf && me.data?.isDeveloper && (
+        <BanControls
+          userId={p.id}
+          bannedAt={p.bannedAt}
+          banReason={p.banReason}
+          isDeveloper={p.isDeveloper}
+          onChanged={() => utils.user.profile.invalidate()}
+        />
+      )}
 
       {/* Telegram connection (optional) */}
       {p.isSelf && (

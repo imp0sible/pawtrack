@@ -3,8 +3,21 @@
 export const DOG_STATUS = ["LOST", "FOUND", "HOME"] as const;
 export type DogStatus = (typeof DOG_STATUS)[number];
 
-export const SEARCH_STATUS = ["ACTIVE", "ARCHIVED"] as const;
+// PENDING = awaiting developer review, REJECTED = review declined it. Only
+// ACTIVE searches appear in the public feed, map and photo matching.
+export const SEARCH_STATUS = ["PENDING", "ACTIVE", "REJECTED", "ARCHIVED"] as const;
 export type SearchStatus = (typeof SEARCH_STATUS)[number];
+
+// Reasons a user can be reported.
+export const USER_REPORT_REASONS = [
+  "HARASSMENT",
+  "SCAM",
+  "SPAM",
+  "FAKE_LISTING",
+  "INAPPROPRIATE",
+  "OTHER",
+] as const;
+export type UserReportReason = (typeof USER_REPORT_REASONS)[number];
 
 export const POI_TYPES = ["TRASH_BIN", "SHOP", "FLYER_SPOT", "OTHER"] as const;
 export type PoiType = (typeof POI_TYPES)[number];
@@ -36,6 +49,10 @@ export const NOTIFICATION_TYPES = [
   "BUG_REPORTED",
   "BUG_RESPONSE",
   "LISTING_REPORTED",
+  "USER_REPORTED",
+  "SEARCH_APPROVED",
+  "SEARCH_REJECTED",
+  "ACCOUNT_BANNED",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 

@@ -46,7 +46,9 @@ export default function ReportPage() {
   }, [me.data?.phone, phonePrefilled]);
 
   const create = trpc.search.create.useMutation({
-    onSuccess: (res) => router.push(`/dogs/${res.dogId}`),
+    // `submitted` lets the dog page greet the reporter with a "thanks, it's in
+    // review" message the first time, instead of only the standing banner.
+    onSuccess: (res) => router.push(`/dogs/${res.dogId}?submitted=1`),
     onError: (e) => setError(e.message),
   });
 

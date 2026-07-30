@@ -37,6 +37,15 @@ export async function POST(req: Request) {
   );
   if (!user || !verifyPassword(password, user.passwordHash)) return invalid;
 
+  // Correct credentials, but the account is banned — say so plainly instead of
+  // signing them into a dead end.
+  if (user.bannedAt) {
+    return NextResponse.json(
+      { error: user.banReason ? `This account has been banned: ${user.banReason}` : "This account has been banned." },
+      { status: 403 }
+    );
+  }
+
   // Best-effort: grant time-limited badges (e.g. Alpha Pioneer) on sign-in.
   // Never let this block or fail the login.
   try {

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Lock } from "lucide-react";
+import { Lock, Hourglass } from "lucide-react";
 import { trpc } from "@/lib/trpc/react";
 import { SearchCard } from "@/components/search-card";
 import { useT } from "@/lib/i18n/react";
@@ -25,6 +25,21 @@ export default function MySearchesPage() {
         </div>
       ) : (
         <>
+          {/* Your own listings still going through review. */}
+          {q.data && q.data.pending.length > 0 && (
+            <section className="space-y-4">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--muted)]">
+                {t("searches.pending", { count: q.data.pending.length })}
+              </h2>
+              <p className="-mt-2 flex items-center gap-1 text-xs text-[var(--muted)]">
+                <Hourglass className="h-3.5 w-3.5" /> {t("searches.pendingNote")}
+              </p>
+              {q.data.pending.map((card) => (
+                <SearchCard key={card.id} card={card} expanded />
+              ))}
+            </section>
+          )}
+
           <section className="space-y-4">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-[var(--muted)]">
               {t("searches.active", { count: q.data?.active.length ?? 0 })}

@@ -13,6 +13,11 @@ export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Sign in required" });
   }
+  // A banned account keeps its session but can't act: every authenticated
+  // mutation and query goes through here, so this is the single chokepoint.
+  if (ctx.user.bannedAt) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "This account has been banned." });
+  }
   return next({ ctx: { ...ctx, user: ctx.user } });
 });
 

@@ -66,6 +66,10 @@ export const userRouter = router({
         username: target.username,
         photoUrl: target.photoUrl,
         bio: target.bio,
+        isDeveloper: target.isDeveloper,
+        // Ban state is shown to the account itself and to developers moderating.
+        bannedAt: isSelf || ctx.user?.isDeveloper ? target.bannedAt : null,
+        banReason: isSelf || ctx.user?.isDeveloper ? target.banReason : null,
         // Phone is private: only the owner sees it on their own profile.
         phone: isSelf ? target.phone : null,
         telegramConnected: isSelf ? !!target.telegramId : false,

@@ -137,9 +137,16 @@ export const searchRouter = router({
     const rows = await fetchCards({ id: { in: ids } });
     const mine = new Set(ids);
     const cards = rows.map((r) => toCard(r, mine));
+    const newestFirst = (a: (typeof cards)[number], b: (typeof cards)[number]) =>
+      b.startedAt.getTime() - a.startedAt.getTime();
     return {
-      active: cards.filter((c) => c.status === "ACTIVE").sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime()),
-      archived: cards.filter((c) => c.status === "ARCHIVED").sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime()),
+      // Listings of yours still awaiting review (or declined) — shown separately
+      // so it's obvious why they aren't in the public feed yet.
+      pending: cards
+        .filter((c) => c.status === "PENDING" || c.status === "REJECTED")
+        .sort(newestFirst),
+      active: cards.filter((c) => c.status === "ACTIVE").sort(newestFirst),
+      archived: cards.filter((c) => c.status === "ARCHIVED").sort(newestFirst),
     };
   }),
 
@@ -161,14 +168,22 @@ export const searchRouter = router({
       : false;
     const isOwner = ctx.user ? search.dog.ownerId === ctx.user.id : false;
 
+    const isDev = ctx.user?.isDeveloper === true;
+
     // Archived searches are visible only to their participants.
     if (search.status === "ARCHIVED" && !isParticipant) {
       throw new TRPCError({ code: "FORBIDDEN", message: "This archived search is private to its participants." });
+    }
+    // Unreviewed / rejected listings aren't public: only the owner (and other
+    // participants) plus developers reviewing them can see them.
+    if ((search.status === "PENDING" || search.status === "REJECTED") && !isParticipant && !isDev) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "This listing is awaiting review." });
     }
 
     return {
       id: search.id,
       status: search.status,
+      reviewNote: search.reviewNote,
       startedAt: search.startedAt,
       endedAt: search.endedAt,
       lastSeenAt: search.lastSeenAt,
@@ -339,10 +354,13 @@ export const searchRouter = router({
           photosJson: JSON.stringify(input.photos ?? []),
         },
       });
+      // New listings wait for developer review before going public. Friends are
+      // deliberately NOT notified yet — that happens on approval, so nobody is
+      // alerted about a listing that may be rejected.
       const search = await prisma.search.create({
         data: {
           dogId: dog.id,
-          status: "ACTIVE",
+          status: "PENDING",
           telegramGroupLink: input.telegramGroupLink,
           lastSeenLat: input.lastSeenLat,
           lastSeenLng: input.lastSeenLng,
@@ -352,16 +370,29 @@ export const searchRouter = router({
           participants: { create: { userId: ctx.user.id, role: "OWNER", traceColor: TRACE_COLOR_HEXES[0] } },
         },
       });
-      await notifyFriends(ctx.user.id, {
-        type: "FRIEND_POSTED_DOG",
-        title: `${displayName(ctx.user)} reported a lost dog: ${dog.name}`,
-        body: input.lastSeenAddress ? `Last seen ${input.lastSeenAddress}` : undefined,
-        data: { searchId: search.id, dogId: dog.id },
-        url: `${APP_URL}/dogs/${dog.id}`,
+
+      // Let the developer(s) know there's something to review.
+      const devs = await prisma.user.findMany({
+        where: { isDeveloper: true, bannedAt: null },
+        select: { id: true },
       });
+      await Promise.all(
+        devs
+          .filter((d) => d.id !== ctx.user.id)
+          .map((d) =>
+            notify(d.id, {
+              type: "LISTING_REPORTED",
+              title: `🕵️ New listing awaiting review: ${dog.name}`,
+              body: `From ${displayName(ctx.user)}`,
+              data: { searchId: search.id, dogId: dog.id },
+              url: `${APP_URL}/dogs/${dog.id}`,
+            })
+          )
+      );
+
       // The reporter becomes an OWNER participant — may unlock First Steps.
       await evaluateAchievements(ctx.user.id);
-      return { searchId: search.id, dogId: dog.id };
+      return { searchId: search.id, dogId: dog.id, status: search.status };
     }),
 
   archive: protectedProcedure

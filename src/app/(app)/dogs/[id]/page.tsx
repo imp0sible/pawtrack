@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   MapPin, Clock, Users, Phone, MessageCircle, Printer, PartyPopper,
-  Eye, Lock, PawPrint, ArrowLeft, Trash2, ScanLine, Languages, ShieldAlert,
+  Eye, Lock, PawPrint, ArrowLeft, Trash2, ScanLine, Languages, ShieldAlert, Hourglass,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc/react";
 import { SearchMap } from "@/components/search-map";
@@ -30,6 +30,8 @@ export default function DogDetailPage() {
   const { locale } = useI18n();
   const router = useRouter();
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const justSubmitted = searchParams.get("submitted") === "1";
   const dogId = params.id;
   const [posterOpen, setPosterOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -106,6 +108,31 @@ export default function DogDetailPage() {
       <Link href="/" className="inline-flex items-center gap-1 text-sm text-[var(--muted)] hover:underline">
         <ArrowLeft className="h-4 w-4" /> {t("dog.backAll")}
       </Link>
+
+      {/* Review state — only the owner, other participants and developers can
+          see this listing at all while it's pending or rejected. */}
+      {(s.status === "PENDING" || s.status === "REJECTED") && (
+        <div
+          className="rounded-2xl p-4 text-sm"
+          style={{
+            background: s.status === "PENDING" ? "var(--brand-soft)" : "color-mix(in srgb, var(--danger) 12%, transparent)",
+          }}
+        >
+          <p className="flex items-start gap-2 font-medium">
+            <Hourglass className="mt-0.5 h-4 w-4 shrink-0" />
+            {s.status === "PENDING"
+              ? justSubmitted
+                ? t("pending.afterSubmit")
+                : t("pending.banner")
+              : t("pending.rejectedBanner")}
+          </p>
+          {s.reviewNote && (
+            <p className="mt-2 text-xs text-[var(--muted)]">
+              <span className="font-medium">{t("pending.reviewNote")}:</span> {s.reviewNote}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Header */}
       <div className="card overflow-hidden md:flex">

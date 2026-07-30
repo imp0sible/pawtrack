@@ -374,4 +374,72 @@ export const sr: Record<MessageKey, string> = {
   "reports.markReviewed": "Označi pregledanim",
   "reports.dismiss": "Odbaci",
   "reports.reopen": "Vrati u obradu",
+
+  // Statuses for reviewed listings
+  "status.PENDING": "Čeka pregled",
+  "status.REJECTED": "Nije odobreno",
+
+  // Banned account
+  "banned.title": "Nalog je suspendovan",
+  "banned.body": "Tvoj nalog je suspendovan i više ne može da objavljuje oglase ni da se pridružuje potragama.",
+  "banned.reason": "Razlog",
+  "banned.appeal": "Ako misliš da je ovo greška, javi nam se da još jednom pogledamo.",
+
+  // Report a user
+  "reportUser.button": "Prijavi korisnika",
+  "reportUser.title": "Prijavi ovog korisnika",
+  "reportUser.subtitle": "Reci nam šta se dogodilo. Prijave pregleda tim.",
+  "reportUser.reason": "Razlog",
+  "reportUser.reason.HARASSMENT": "Uznemiravanje ili zloupotreba",
+  "reportUser.reason.SCAM": "Prevara",
+  "reportUser.reason.SPAM": "Spam",
+  "reportUser.reason.FAKE_LISTING": "Lažan oglas o izgubljenom psu",
+  "reportUser.reason.INAPPROPRIATE": "Neprikladan sadržaj",
+  "reportUser.reason.OTHER": "Nešto drugo",
+  "reportUser.note": "Detalji",
+  "reportUser.notePlaceholder": "Sve što nam pomaže da pregledamo…",
+  "reportUser.submit": "Pošalji prijavu",
+  "reportUser.submitted": "Hvala — pregledaćemo ovaj nalog.",
+
+  // Developer: ban controls
+  "ban.ban": "Banuj korisnika",
+  "ban.unban": "Ukini ban",
+  "ban.reason": "Razlog (vidi ga korisnik)",
+  "ban.reasonPlaceholder": "Zašto se nalog suspenduje?",
+  "ban.confirm": "Banuj ovaj nalog",
+  "ban.banning": "Banujem…",
+  "ban.banned": "Ovaj nalog je banovan",
+  "ban.bannedSince": "Banovan {date}",
+  "ban.cannotBanDeveloper": "Nalozi programera ne mogu biti banovani.",
+
+  // Developer: review queue
+  "nav.approvals": "Oglasi za pregled",
+  "review.title": "Oglasi za pregled",
+  "review.subtitle": "Novi oglasi o izgubljenim psima čekaju objavu.",
+  "review.empty": "Nema ništa za pregled. 🎉",
+  "review.tabPending": "Čeka pregled",
+  "review.tabRejected": "Nije odobreno",
+  "review.approve": "Odobri i objavi",
+  "review.reject": "Odbij",
+  "review.note": "Napomena podnosiocu (opciono)",
+  "review.notePlaceholder": "Zašto je oglas odbijen?",
+  "review.reviewing": "Čuvam…",
+  "review.by": "Prijavio {name}",
+  "review.chip": "Mikročip",
+  "review.phone": "Kontakt",
+
+  // Reporter-facing review status
+  "pending.banner": "Ovaj oglas pregleda naš tim. Zajednici još nije vidljiv.",
+  "pending.rejectedBanner": "Ovaj oglas nije odobren.",
+  "pending.reviewNote": "Napomena tima",
+  "pending.afterSubmit": "Hvala! Oglas je poslat i čeka kratak pregled pre objave. Obavestićemo te kada bude objavljen.",
+
+  // My searches
+  "searches.pending": "Čeka pregled ({count})",
+  "searches.pendingNote": "Ovi oglasi se pregledaju pre objave.",
+
+  // Moderation tabs
+  "mod.tabListings": "Oglasi",
+  "mod.tabUsers": "Korisnici",
+  "mod.tabApprovals": "Odobrenja",
 };

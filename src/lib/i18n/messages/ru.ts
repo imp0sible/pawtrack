@@ -374,4 +374,72 @@ export const ru: Record<MessageKey, string> = {
   "reports.markReviewed": "Отметить проверенным",
   "reports.dismiss": "Отклонить",
   "reports.reopen": "Вернуть в работу",
+
+  // Statuses for reviewed listings
+  "status.PENDING": "На проверке",
+  "status.REJECTED": "Не одобрено",
+
+  // Banned account
+  "banned.title": "Аккаунт заблокирован",
+  "banned.body": "Ваш аккаунт заблокирован: публиковать объявления и присоединяться к поискам больше нельзя.",
+  "banned.reason": "Причина",
+  "banned.appeal": "Если вы считаете это ошибкой, свяжитесь с нами — мы всё перепроверим.",
+
+  // Report a user
+  "reportUser.button": "Пожаловаться на пользователя",
+  "reportUser.title": "Жалоба на пользователя",
+  "reportUser.subtitle": "Расскажите, что произошло. Жалобы рассматривает команда.",
+  "reportUser.reason": "Причина",
+  "reportUser.reason.HARASSMENT": "Оскорбления или травля",
+  "reportUser.reason.SCAM": "Мошенничество",
+  "reportUser.reason.SPAM": "Спам",
+  "reportUser.reason.FAKE_LISTING": "Поддельное объявление о пропаже",
+  "reportUser.reason.INAPPROPRIATE": "Неприемлемый контент",
+  "reportUser.reason.OTHER": "Другое",
+  "reportUser.note": "Подробности",
+  "reportUser.notePlaceholder": "Всё, что поможет нам разобраться…",
+  "reportUser.submit": "Отправить жалобу",
+  "reportUser.submitted": "Спасибо — мы проверим этот аккаунт.",
+
+  // Developer: ban controls
+  "ban.ban": "Заблокировать",
+  "ban.unban": "Снять блокировку",
+  "ban.reason": "Причина (видна пользователю)",
+  "ban.reasonPlaceholder": "Почему аккаунт блокируется?",
+  "ban.confirm": "Заблокировать аккаунт",
+  "ban.banning": "Блокируем…",
+  "ban.banned": "Этот аккаунт заблокирован",
+  "ban.bannedSince": "Заблокирован {date}",
+  "ban.cannotBanDeveloper": "Аккаунты разработчиков блокировать нельзя.",
+
+  // Developer: review queue
+  "nav.approvals": "Объявления на проверку",
+  "review.title": "Объявления на проверку",
+  "review.subtitle": "Новые объявления о пропавших собаках ждут публикации.",
+  "review.empty": "Проверять нечего. 🎉",
+  "review.tabPending": "На проверке",
+  "review.tabRejected": "Не одобрено",
+  "review.approve": "Одобрить и опубликовать",
+  "review.reject": "Отклонить",
+  "review.note": "Примечание автору (необязательно)",
+  "review.notePlaceholder": "Почему объявление отклонено?",
+  "review.reviewing": "Сохраняем…",
+  "review.by": "Автор: {name}",
+  "review.chip": "Микрочип",
+  "review.phone": "Контакт",
+
+  // Reporter-facing review status
+  "pending.banner": "Это объявление проверяется нашей командой. Сообществу оно пока не видно.",
+  "pending.rejectedBanner": "Это объявление не было одобрено.",
+  "pending.reviewNote": "Примечание команды",
+  "pending.afterSubmit": "Спасибо! Объявление отправлено и ждёт быстрой проверки перед публикацией. Мы сообщим, как только оно появится.",
+
+  // My searches
+  "searches.pending": "На проверке ({count})",
+  "searches.pendingNote": "Эти объявления проверяются перед публикацией.",
+
+  // Moderation tabs
+  "mod.tabListings": "Объявления",
+  "mod.tabUsers": "Пользователи",
+  "mod.tabApprovals": "Проверка",
 };
