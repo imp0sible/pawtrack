@@ -10,6 +10,7 @@ export const ru: Record<MessageKey, string> = {
   "common.remove": "Удалить",
   "common.loading": "Загрузка…",
   "common.back": "Назад",
+  "common.retry": "Повторить",
   "common.or": "или",
   "common.optional": "необязательно",
   "common.copied": "Скопировано!",

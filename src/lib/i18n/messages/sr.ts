@@ -10,6 +10,7 @@ export const sr: Record<MessageKey, string> = {
   "common.remove": "Ukloni",
   "common.loading": "Učitavanje…",
   "common.back": "Nazad",
+  "common.retry": "Pokušaj ponovo",
   "common.or": "ili",
   "common.optional": "opciono",
   "common.copied": "Kopirano!",

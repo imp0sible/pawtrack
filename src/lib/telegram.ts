@@ -69,28 +69,31 @@ export function verifyWebAppInitData(initData: string, botToken: string): Telegr
   const hash = params.get("hash");
   if (!hash) return null;
 
-  const pairs: string[] = [];
-  params.forEach((value, key) => {
-    // `hash` is what we're checking; `signature` is Telegram's separate 3rd-party
-    // (Ed25519) field and is excluded from the HMAC data-check-string.
-    if (key === "hash" || key === "signature") return;
-    pairs.push(`${key}=${value}`);
-  });
-  pairs.sort();
-  const dataCheckString = pairs.join("\n");
+  const entries: Array<[string, string]> = [];
+  params.forEach((value, key) => entries.push([key, value]));
 
   const secret = crypto.createHmac("sha256", "WebAppData").update(botToken).digest();
-  const hmac = crypto.createHmac("sha256", secret).update(dataCheckString).digest("hex");
-
-  let a: Buffer;
-  let b: Buffer;
+  let expected: Buffer;
   try {
-    a = Buffer.from(hmac, "hex");
-    b = Buffer.from(hash, "hex");
+    expected = Buffer.from(hash, "hex");
   } catch {
     return null;
   }
-  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+
+  // Build the data-check-string (all fields except `hash`, sorted) and compare.
+  // Telegram added a `signature` field later; whether it belongs in the hash's
+  // data-check-string is version-dependent, so we accept a match either way.
+  const matches = (dropSignature: boolean): boolean => {
+    const dcs = entries
+      .filter(([k]) => k !== "hash" && !(dropSignature && k === "signature"))
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([k, v]) => `${k}=${v}`)
+      .join("\n");
+    const hmac = crypto.createHmac("sha256", secret).update(dcs).digest("hex");
+    const got = Buffer.from(hmac, "hex");
+    return got.length === expected.length && crypto.timingSafeEqual(got, expected);
+  };
+  if (!matches(false) && !matches(true)) return null;
 
   // Freshness: reject payloads older than 24h.
   const authDate = Number(params.get("auth_date"));
