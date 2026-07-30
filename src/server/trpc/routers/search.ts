@@ -12,6 +12,18 @@ import { emitToSearch } from "@/lib/realtime";
 import { SORT_MODES, DOG_SIZES } from "@/lib/constants";
 import { normalizePhone } from "@/lib/phone";
 import { imageSchema, httpUrlSchema } from "@/lib/validators";
+import { pickTraceColor, fallbackTraceColor, TRACE_COLOR_HEXES } from "@/lib/trace";
+
+// Picks the first unused trace colour for a search. Colours are unique per
+// search (enforced by a DB index), so callers should tolerate a race by
+// retrying without a colour.
+async function nextTraceColor(searchId: string): Promise<string> {
+  const rows = await prisma.searchParticipant.findMany({
+    where: { searchId },
+    select: { traceColor: true },
+  });
+  return pickTraceColor(rows.map((r) => r.traceColor));
+}
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -188,12 +200,15 @@ export const searchRouter = router({
           photoUrl: search.dog.owner.photoUrl,
         },
       },
-      participants: search.participants.map((p) => ({
+      participants: search.participants.map((p, i) => ({
         id: p.id,
         role: p.role,
         joinedAt: p.joinedAt,
         secondsSpent: p.secondsSpent,
         metersCovered: p.metersCovered,
+        // Older participants may predate trace colours — fall back to a stable
+        // palette slot so the map and the searcher list always agree.
+        traceColor: p.traceColor ?? fallbackTraceColor(i),
         user: {
           id: p.user.id,
           name: displayName(p.user),
@@ -210,13 +225,21 @@ export const searchRouter = router({
         by: displayName(s.user),
       })),
       pois: search.pois.map((p) => ({ id: p.id, type: p.type, lat: p.lat, lng: p.lng, note: p.note })),
-      coverage: search.coverage.map((c) => ({
-        id: c.id,
-        points: parsePath(c.pointsJson),
-        meters: c.meters,
-        source: c.source,
-        by: displayName(c.user),
-      })),
+      coverage: search.coverage.map((c) => {
+        const idx = search.participants.findIndex((p) => p.userId === c.userId);
+        const own = idx >= 0 ? search.participants[idx] : null;
+        return {
+          id: c.id,
+          points: parsePath(c.pointsJson),
+          meters: c.meters,
+          source: c.source,
+          by: displayName(c.user),
+          userId: c.userId,
+          // recordedAt drives the time-based fade on the map.
+          recordedAt: c.recordedAt,
+          color: own?.traceColor ?? (idx >= 0 ? fallbackTraceColor(idx) : undefined),
+        };
+      }),
     };
   }),
 
@@ -233,9 +256,17 @@ export const searchRouter = router({
     });
     if (existing) return { joined: true };
 
-    await prisma.searchParticipant.create({
-      data: { searchId: input.searchId, userId: ctx.user.id, role: "SEARCHER" },
-    });
+    const traceColor = await nextTraceColor(input.searchId);
+    try {
+      await prisma.searchParticipant.create({
+        data: { searchId: input.searchId, userId: ctx.user.id, role: "SEARCHER", traceColor },
+      });
+    } catch {
+      // Colour raced with another joiner — join without one; the UI falls back.
+      await prisma.searchParticipant.create({
+        data: { searchId: input.searchId, userId: ctx.user.id, role: "SEARCHER" },
+      });
+    }
 
     const url = `${APP_URL}/dogs/${search.dogId}`;
     if (search.dog.ownerId !== ctx.user.id) {
@@ -317,7 +348,8 @@ export const searchRouter = router({
           lastSeenLng: input.lastSeenLng,
           lastSeenAddress: input.lastSeenAddress,
           lastSeenAt: new Date(),
-          participants: { create: { userId: ctx.user.id, role: "OWNER" } },
+          // The reporter is the first participant, so they get the first colour.
+          participants: { create: { userId: ctx.user.id, role: "OWNER", traceColor: TRACE_COLOR_HEXES[0] } },
         },
       });
       await notifyFriends(ctx.user.id, {

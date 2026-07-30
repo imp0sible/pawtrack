@@ -64,6 +64,9 @@ model UserSettings {
   notificationsEnabled Boolean  @default(true)
   geolocationEnabled   Boolean  @default(true)
   friendActivityAlerts Boolean  @default(true)
+  // How long a coverage trace takes to fade to nothing on the map, in minutes.
+  // 0 means "all time" (never fade). Viewer preference.
+  traceFadeMinutes     Int      @default(30)
   updatedAt            DateTime @updatedAt
 }
 
@@ -119,8 +122,12 @@ model SearchParticipant {
   joinedAt      DateTime @default(now())
   secondsSpent  Int      @default(0)
   metersCovered Int      @default(0)
+  // Hex colour of this searcher's coverage trace on the map. Unique per search
+  // so two people can never pick the same colour (NULLs don't collide).
+  traceColor    String?
 
   @@unique([searchId, userId])
+  @@unique([searchId, traceColor])
 }
 
 model SightingPin {

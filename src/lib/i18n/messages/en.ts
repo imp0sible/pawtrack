@@ -129,6 +129,7 @@ export const en = {
   "dog.possibleSighting": "Possible sighting",
   "dog.searchers": "Searchers ({count})",
   "dog.ownerBadge": "Owner",
+  "dog.traceColor": "Trace colour on the map",
   "dog.covered": "{distance} covered",
 
   // Report

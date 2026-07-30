@@ -149,6 +149,7 @@ export const userRouter = router({
       notificationsEnabled: settings.notificationsEnabled,
       geolocationEnabled: settings.geolocationEnabled,
       friendActivityAlerts: settings.friendActivityAlerts,
+      traceFadeMinutes: settings.traceFadeMinutes,
     };
   }),
 
@@ -159,6 +160,8 @@ export const userRouter = router({
         notificationsEnabled: z.boolean().optional(),
         geolocationEnabled: z.boolean().optional(),
         friendActivityAlerts: z.boolean().optional(),
+        // 0 = never fade ("all time").
+        traceFadeMinutes: z.number().int().min(0).max(1440).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {

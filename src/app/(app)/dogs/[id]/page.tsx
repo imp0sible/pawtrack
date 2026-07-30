@@ -299,6 +299,8 @@ export default function DogDetailPage() {
         sightings={s.sightings}
         pois={s.pois}
         coverage={s.coverage}
+        participants={s.participants}
+        meId={me.data?.id}
         onChanged={() => utils.search.detail.invalidate()}
       />
 
@@ -330,6 +332,12 @@ export default function DogDetailPage() {
             {s.participants.map((p) => {
               const inner = (
                 <>
+                  {/* Colour bar matching this searcher's trace on the map. */}
+                  <span
+                    className="h-9 w-1 shrink-0 rounded-full"
+                    style={{ background: p.traceColor }}
+                    title={t("dog.traceColor")}
+                  />
                   <Avatar name={p.user.name} src={p.user.photoUrl} size={36} />
                   <div className="flex-1">
                     <p className="text-sm font-medium">

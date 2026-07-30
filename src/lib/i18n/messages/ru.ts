@@ -130,6 +130,7 @@ export const ru: Record<MessageKey, string> = {
   "dog.possibleSighting": "Возможно, видели",
   "dog.searchers": "Участники ({count})",
   "dog.ownerBadge": "Владелец",
+  "dog.traceColor": "Цвет следа на карте",
   "dog.covered": "пройдено {distance}",
 
   // Report

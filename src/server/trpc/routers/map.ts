@@ -9,6 +9,29 @@ import { notify } from "@/lib/notify";
 import { emitToSearch } from "@/lib/realtime";
 import { evaluateAchievements } from "@/lib/achievements";
 import { POI_TYPES } from "@/lib/constants";
+import { pickTraceColor, isTraceColor } from "@/lib/trace";
+
+// Gives every participant in a search a real, reserved trace colour. Assigns in
+// join order, which matches the display fallback, so nobody's colour visibly
+// changes. Idempotent.
+async function ensureTraceColors(searchId: string): Promise<void> {
+  const parts = await prisma.searchParticipant.findMany({
+    where: { searchId },
+    orderBy: { joinedAt: "asc" },
+    select: { id: true, traceColor: true },
+  });
+  const used = parts.map((p) => p.traceColor).filter(Boolean) as string[];
+  for (const p of parts) {
+    if (p.traceColor) continue;
+    const color = pickTraceColor(used);
+    try {
+      await prisma.searchParticipant.update({ where: { id: p.id }, data: { traceColor: color } });
+      used.push(color);
+    } catch {
+      // Raced with another writer for this colour — leave it for next time.
+    }
+  }
+}
 
 async function assertActiveSearch(searchId: string) {
   const search = await prisma.search.findUnique({ where: { id: searchId }, include: { dog: true } });
@@ -139,6 +162,15 @@ export const mapRouter = router({
         },
       });
 
+      // Recording coverage can be someone's first act in a search, so make sure
+      // they have a trace colour assigned.
+      const existing = await prisma.searchParticipant.findMany({
+        where: { searchId: input.searchId },
+        select: { userId: true, traceColor: true },
+      });
+      const mine = existing.find((p) => p.userId === ctx.user.id);
+      const newColor = mine?.traceColor ? undefined : pickTraceColor(existing.map((p) => p.traceColor));
+
       await prisma.searchParticipant.upsert({
         where: { searchId_userId: { searchId: input.searchId, userId: ctx.user.id } },
         create: {
@@ -147,10 +179,12 @@ export const mapRouter = router({
           role: "SEARCHER",
           metersCovered: meters,
           secondsSpent: input.secondsSpent ?? 0,
+          traceColor: newColor,
         },
         update: {
           metersCovered: { increment: meters },
           secondsSpent: { increment: input.secondsSpent ?? 0 },
+          ...(newColor ? { traceColor: newColor } : {}),
         },
       });
 
@@ -161,5 +195,40 @@ export const mapRouter = router({
       });
       const unlocked = await evaluateAchievements(ctx.user.id);
       return { meters, unlocked };
+    }),
+
+  // Lets a searcher pick the colour of their own coverage trace. Colours are
+  // unique within a search, so a taken colour is rejected.
+  setTraceColor: protectedProcedure
+    .input(z.object({ searchId: z.string(), color: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      if (!isTraceColor(input.color)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Unknown colour" });
+      }
+      // Participants from before trace colours existed only *display* a fallback
+      // colour; nothing is reserved for them in the database. Materialise those
+      // first, otherwise the clash check below would see NULLs and happily hand
+      // out a colour someone is already shown as using.
+      await ensureTraceColors(input.searchId);
+
+      const mine = await prisma.searchParticipant.findUnique({
+        where: { searchId_userId: { searchId: input.searchId, userId: ctx.user.id } },
+        select: { id: true },
+      });
+      if (!mine) throw new TRPCError({ code: "FORBIDDEN", message: "Join the search first" });
+
+      const clash = await prisma.searchParticipant.findFirst({
+        where: { searchId: input.searchId, traceColor: input.color, NOT: { userId: ctx.user.id } },
+        select: { id: true },
+      });
+      if (clash) {
+        throw new TRPCError({ code: "CONFLICT", message: "Another searcher is already using that colour." });
+      }
+
+      await prisma.searchParticipant.update({
+        where: { id: mine.id },
+        data: { traceColor: input.color },
+      });
+      return { ok: true };
     }),
 });

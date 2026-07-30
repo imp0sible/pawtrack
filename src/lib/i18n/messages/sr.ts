@@ -130,6 +130,7 @@ export const sr: Record<MessageKey, string> = {
   "dog.possibleSighting": "Moguće viđenje",
   "dog.searchers": "Tragači ({count})",
   "dog.ownerBadge": "Vlasnik",
+  "dog.traceColor": "Boja traga na mapi",
   "dog.covered": "pređeno {distance}",
 
   // Report

@@ -29,6 +29,8 @@ export interface MapPath {
   id: string;
   points: Array<[number, number]>;
   color?: string;
+  /** 0–1; used for the time-based fade of coverage traces. */
+  opacity?: number;
 }
 
 export interface MapCircle {
@@ -193,7 +195,7 @@ export function LeafletMap({
           <Polyline
             key={p.id}
             positions={p.points}
-            pathOptions={{ color: p.color ?? "#0e9f6e", weight: 5, opacity: 0.55 }}
+            pathOptions={{ color: p.color ?? "#0e9f6e", weight: 5, opacity: p.opacity ?? 0.55 }}
           />
         ))}
 
