@@ -428,10 +428,15 @@ export const en = {
   "review.phone": "Contact",
 
   // Reporter-facing review status
-  "pending.banner": "This listing is awaiting review by our team. It isn't visible to the community yet.",
+  "pending.banner": "Awaiting review before it appears on the main page — but the link below already works. Share it now so friends can help.",
   "pending.rejectedBanner": "This listing wasn't approved.",
   "pending.reviewNote": "Note from the team",
-  "pending.afterSubmit": "Thanks! Your listing has been submitted and is awaiting a quick review before it goes live. We'll notify you as soon as it's published.",
+  "pending.afterSubmit": "Your search is ready! Share the link below and friends can open it, join, and report sightings right away. It'll also appear on the main page once our team approves it.",
+  "share.title": "Share this search",
+  "share.copy": "Copy link",
+  "share.copied": "Link copied!",
+  "share.share": "Share",
+  "share.hint": "Anyone with this link can open the search and help — no approval needed.",
 
   // My searches
   "searches.pending": "Awaiting review ({count})",

@@ -3,10 +3,19 @@
 export const DOG_STATUS = ["LOST", "FOUND", "HOME"] as const;
 export type DogStatus = (typeof DOG_STATUS)[number];
 
-// PENDING = awaiting developer review, REJECTED = review declined it. Only
-// ACTIVE searches appear in the public feed, map and photo matching.
+// PENDING = awaiting developer review, REJECTED = review declined it.
+//
+// Only ACTIVE searches appear in the public discovery surfaces (feed, map,
+// photo matching). PENDING searches are "unlisted": fully usable by anyone who
+// has the link — they can open it, join, and report sightings — they just
+// aren't listed publicly until a developer approves them.
 export const SEARCH_STATUS = ["PENDING", "ACTIVE", "REJECTED", "ARCHIVED"] as const;
 export type SearchStatus = (typeof SEARCH_STATUS)[number];
+
+// A search that is live and can be participated in (listed or unlisted).
+export function isOpenSearch(status: string): boolean {
+  return status === "ACTIVE" || status === "PENDING";
+}
 
 // Reasons a user can be reported.
 export const USER_REPORT_REASONS = [

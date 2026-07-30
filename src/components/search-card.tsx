@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { formatDistance } from "@/lib/geo";
 import { timeAgo } from "@/lib/format";
 import { formatPhone } from "@/lib/phone";
+import { isOpenSearch } from "@/lib/constants";
 import { useT } from "@/lib/i18n/react";
 
 export interface SearchCardData {
@@ -101,7 +102,7 @@ export function SearchCard({ card, expanded = false }: { card: SearchCardData; e
                 <Phone className="h-4 w-4" />
               </a>
             )}
-            {card.status === "ACTIVE" &&
+            {isOpenSearch(card.status) &&
               (card.isParticipant ? (
                 <span className="chip chip-active">✓</span>
               ) : (

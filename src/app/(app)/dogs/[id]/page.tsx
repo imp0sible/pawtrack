@@ -11,6 +11,8 @@ import { trpc } from "@/lib/trpc/react";
 import { SearchMap } from "@/components/search-map";
 import { DogPoster } from "@/components/dog-poster";
 import { ReportListing } from "@/components/report-listing";
+import { ShareSearch } from "@/components/share-search";
+import { isOpenSearch } from "@/lib/constants";
 import { StatusBadge } from "@/components/status-badge";
 import { Avatar } from "@/components/avatar";
 import { timeAgo, formatDuration } from "@/lib/format";
@@ -92,7 +94,9 @@ export default function DogDetailPage() {
   const dog = s.dog;
   const dmUrl = dog.owner.username ? `https://t.me/${dog.owner.username}` : null;
   const phone = dog.contactPhone;
-  const pageUrl = typeof window !== "undefined" ? window.location.href : "";
+  // Canonical link for sharing and the poster QR — without any transient query
+  // string (e.g. ?submitted=1) that would otherwise be baked into the code.
+  const pageUrl = typeof window !== "undefined" ? `${window.location.origin}/dogs/${dogId}` : "";
 
   async function copyPhone() {
     if (!phone) return;
@@ -133,6 +137,9 @@ export default function DogDetailPage() {
           )}
         </div>
       )}
+
+      {/* The share link is the headline action while a search is unlisted. */}
+      {s.status === "PENDING" && pageUrl && <ShareSearch url={pageUrl} dogName={dog.name} />}
 
       {/* Header */}
       <div className="card overflow-hidden md:flex">
@@ -262,7 +269,8 @@ export default function DogDetailPage() {
 
           {/* Actions */}
           <div className="mt-4 flex flex-wrap gap-2">
-            {s.status === "ACTIVE" &&
+            {/* Unlisted searches are joinable too — that's the point of the link. */}
+            {isOpenSearch(s.status) &&
               (s.isParticipant ? (
                 !s.isOwner && (
                   <button className="btn-ghost" onClick={() => leave.mutate({ searchId: s.id })} disabled={leave.isPending}>
@@ -285,7 +293,7 @@ export default function DogDetailPage() {
               <Printer className="h-4 w-4" /> {t("dog.printPoster")}
             </button>
 
-            {s.isOwner && s.status === "ACTIVE" && (
+            {s.isOwner && isOpenSearch(s.status) && (
               <button
                 className="btn-ghost inline-flex items-center gap-1.5"
                 onClick={() => {
@@ -318,7 +326,7 @@ export default function DogDetailPage() {
       <SearchMap
         searchId={s.id}
         dogId={dog.id}
-        active={s.status === "ACTIVE"}
+        active={isOpenSearch(s.status)}
         dogName={dog.name}
         homeLat={dog.homeLat}
         homeLng={dog.homeLng}

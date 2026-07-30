@@ -8,7 +8,7 @@ import { displayName } from "@/lib/format";
 import { notify } from "@/lib/notify";
 import { emitToSearch } from "@/lib/realtime";
 import { evaluateAchievements } from "@/lib/achievements";
-import { POI_TYPES } from "@/lib/constants";
+import { POI_TYPES, isOpenSearch } from "@/lib/constants";
 import { pickTraceColor, isTraceColor } from "@/lib/trace";
 
 // Gives every participant in a search a real, reserved trace colour. Assigns in
@@ -33,10 +33,14 @@ async function ensureTraceColors(searchId: string): Promise<void> {
   }
 }
 
-async function assertActiveSearch(searchId: string) {
+// Sightings, POIs and coverage work on any open search — including "unlisted"
+// PENDING ones, which are fully usable by anyone who has the link.
+async function assertOpenSearch(searchId: string) {
   const search = await prisma.search.findUnique({ where: { id: searchId }, include: { dog: true } });
   if (!search) throw new TRPCError({ code: "NOT_FOUND" });
-  if (search.status !== "ACTIVE") throw new TRPCError({ code: "BAD_REQUEST", message: "Search is closed" });
+  if (!isOpenSearch(search.status)) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Search is closed" });
+  }
   return search;
 }
 
@@ -52,7 +56,7 @@ export const mapRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const search = await assertActiveSearch(input.searchId);
+      const search = await assertOpenSearch(input.searchId);
       const pin = await prisma.sightingPin.create({
         data: {
           searchId: input.searchId,
@@ -108,7 +112,7 @@ export const mapRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      await assertActiveSearch(input.searchId);
+      await assertOpenSearch(input.searchId);
       const poi = await prisma.pointOfInterest.create({
         data: {
           searchId: input.searchId,
@@ -149,7 +153,7 @@ export const mapRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      await assertActiveSearch(input.searchId);
+      await assertOpenSearch(input.searchId);
       const meters = Math.round(pathMeters(input.points));
 
       const segment = await prisma.coverageSegment.create({

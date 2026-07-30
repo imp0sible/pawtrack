@@ -9,7 +9,7 @@ import { notify } from "@/lib/notify";
 import { notifyFriends } from "@/lib/social";
 import { evaluateAchievements } from "@/lib/achievements";
 import { emitToSearch } from "@/lib/realtime";
-import { SORT_MODES, DOG_SIZES } from "@/lib/constants";
+import { SORT_MODES, DOG_SIZES, isOpenSearch } from "@/lib/constants";
 import { normalizePhone } from "@/lib/phone";
 import { imageSchema, httpUrlSchema } from "@/lib/validators";
 import { pickTraceColor, fallbackTraceColor, TRACE_COLOR_HEXES } from "@/lib/trace";
@@ -174,10 +174,13 @@ export const searchRouter = router({
     if (search.status === "ARCHIVED" && !isParticipant) {
       throw new TRPCError({ code: "FORBIDDEN", message: "This archived search is private to its participants." });
     }
-    // Unreviewed / rejected listings aren't public: only the owner (and other
-    // participants) plus developers reviewing them can see them.
-    if ((search.status === "PENDING" || search.status === "REJECTED") && !isParticipant && !isDev) {
-      throw new TRPCError({ code: "FORBIDDEN", message: "This listing is awaiting review." });
+    // PENDING is "unlisted", not private: anyone with the link can open and use
+    // it (that's how an owner rallies friends immediately). It simply doesn't
+    // appear in the feed/map/matching until a developer approves it.
+    //
+    // REJECTED stays private to the owner, other participants and developers.
+    if (search.status === "REJECTED" && !isParticipant && !isDev) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "This listing isn't available." });
     }
 
     return {
@@ -264,7 +267,10 @@ export const searchRouter = router({
       include: { dog: true },
     });
     if (!search) throw new TRPCError({ code: "NOT_FOUND" });
-    if (search.status !== "ACTIVE") throw new TRPCError({ code: "BAD_REQUEST", message: "Search is closed" });
+    // Unlisted (PENDING) searches are joinable via their link, same as ACTIVE.
+    if (!isOpenSearch(search.status)) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Search is closed" });
+    }
 
     const existing = await prisma.searchParticipant.findUnique({
       where: { searchId_userId: { searchId: input.searchId, userId: ctx.user.id } },

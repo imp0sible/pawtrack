@@ -10,6 +10,7 @@ import { emitToSearch } from "@/lib/realtime";
 import { evaluateAchievements } from "@/lib/achievements";
 import { bestSimilarity, bandFor, parseVectors } from "@/lib/vector";
 import { imageSchema as photo } from "@/lib/validators";
+import { isOpenSearch } from "@/lib/constants";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
@@ -139,7 +140,9 @@ export const matchRouter = router({
         include: { dog: true },
       });
       if (!search) throw new TRPCError({ code: "NOT_FOUND" });
-      if (search.status !== "ACTIVE") {
+      // Open includes unlisted (PENDING) searches, so a match reported from a
+      // shared link still reaches the owner.
+      if (!isOpenSearch(search.status)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Search is closed" });
       }
 

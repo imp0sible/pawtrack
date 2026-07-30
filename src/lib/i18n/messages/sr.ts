@@ -429,10 +429,15 @@ export const sr: Record<MessageKey, string> = {
   "review.phone": "Kontakt",
 
   // Reporter-facing review status
-  "pending.banner": "Ovaj oglas pregleda naš tim. Zajednici još nije vidljiv.",
+  "pending.banner": "Čeka pregled pre nego što se pojavi na glavnoj strani — ali link ispod već radi. Podeli ga da prijatelji pomognu.",
   "pending.rejectedBanner": "Ovaj oglas nije odobren.",
   "pending.reviewNote": "Napomena tima",
-  "pending.afterSubmit": "Hvala! Oglas je poslat i čeka kratak pregled pre objave. Obavestićemo te kada bude objavljen.",
+  "pending.afterSubmit": "Potraga je spremna! Podeli link ispod i prijatelji mogu odmah da ga otvore, pridruže se i prijave viđenja. Na glavnoj strani će se pojaviti kada tim odobri oglas.",
+  "share.title": "Podeli ovu potragu",
+  "share.copy": "Kopiraj link",
+  "share.copied": "Link je kopiran!",
+  "share.share": "Podeli",
+  "share.hint": "Svako ko ima ovaj link može da otvori potragu i pomogne — odobrenje nije potrebno.",
 
   // My searches
   "searches.pending": "Čeka pregled ({count})",

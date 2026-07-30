@@ -5,6 +5,7 @@ import { startBot } from "@/realtime/bot";
 import { prisma } from "@/lib/db";
 import { verifySessionToken } from "@/lib/jwt";
 import { internalApiSecret } from "@/lib/secrets";
+import { isOpenSearch } from "@/lib/constants";
 
 const PORT = Number(process.env.REALTIME_PORT ?? 3001);
 const SECRET = internalApiSecret();
@@ -38,9 +39,10 @@ async function canJoin(userId: string | null, room: string): Promise<boolean> {
     const searchId = room.slice("search:".length);
     const search = await prisma.search.findUnique({ where: { id: searchId }, select: { status: true } });
     if (!search) return false;
-    // Active searches are viewable by any signed-in user (same as the dog page).
-    if (search.status === "ACTIVE") return true;
-    // Archived searches: participants only.
+    // Active and unlisted-but-open (PENDING) searches are viewable by any
+    // signed-in user, same as the dog page they're watching.
+    if (isOpenSearch(search.status)) return true;
+    // Archived / rejected searches: participants only.
     const part = await prisma.searchParticipant.findUnique({
       where: { searchId_userId: { searchId, userId } },
       select: { id: true },
